@@ -74,10 +74,12 @@ public class EditableTitleComponent : ITitleComponent
 
 public class IncomingTitle
 {
+    string subBoard;
     List<ITitleComponent> titleComponents = new List<ITitleComponent>();
 
-    public IncomingTitle(params object[] titleText)
+    public IncomingTitle(string subBoard, params object[] titleText)
     {
+        this.subBoard = subBoard;
         foreach (var component in titleText)
         {
             if (component is string)

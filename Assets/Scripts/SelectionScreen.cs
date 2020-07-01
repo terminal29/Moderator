@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Unity.Mathematics;
 using UnityEditor.Build.Content;
@@ -22,7 +23,7 @@ public class SelectionScreen : MonoBehaviour
 
     public PopularityBar fancybookPopularityBar;
     public PopularityBar fancybookSuspicionBar;
-    private float fancybookPopularity = 15f;
+    private float fancybookPopularity = 20f;
     private float fancybookSuspicion = 5f;
 
     List<IncomingTitle> incomingTitles = new List<IncomingTitle>();
@@ -36,26 +37,21 @@ public class SelectionScreen : MonoBehaviour
         fancybookPopularityBar.SetValue(fancybookPopularity / maxPopularity, false);
         fancybookSuspicionBar.SetValue(fancybookSuspicion / maxPopularity, false);
 
-        incomingTitles.Add(new IncomingTitle(
-            "Fancybook quietly releases new",
-            new EditableTitleComponent(
-                new EditableComponentChoice("amazing", -1, -0.5f, 1, 1),
-                new EditableComponentChoice("mediocre", 1, 1, -1, -0.5f),
-                new EditableComponentChoice("terrible", 2, 2, -2, -2f)
-            ),
-            "feature in time for Christmas. Be sure to make use of the new",
-            new EditableTitleComponent(
-                new EditableComponentChoice("video calls", -2, 0, 1, -0.5f),
-                new EditableComponentChoice("complaints button", 2, 1, 1, -0.5f)
-            ),
-            "and share it with all of your family and friends."
-            ));
+        // randomise incoming articles
+        incomingTitles = AllTitles.Titles.ToList().OrderBy(x => UnityEngine.Random.value).ToList();
+
         shownTitle.SetTitle(incomingTitles[currentTitleIndex]);
 
         postButton.onClick.AddListener(() =>
         {
             // Confirm new values
             var (rpop, rsus, fpop, fsus) = confirmModifiers();
+
+            // If the edited article doesnt affect fancybook, add some randomness to it anyway
+            fpop = fpop == 0.0f ? UnityEngine.Random.Range(-1.0f, 1.0f) : fpop;
+            fsus = fsus == 0.0f ? UnityEngine.Random.Range(-1.0f, 1.0f) : fsus;
+
+
             Debug.Log(string.Format("Modifiers are {0} {1} {2} {3}", rpop, rsus, fpop, fsus));
             roddentPopularity = Math.Min(maxPopularity, Math.Max(0, roddentPopularity + rpop));
             roddentSuspicion = Math.Min(maxPopularity, Math.Max(0, roddentSuspicion + rsus));
