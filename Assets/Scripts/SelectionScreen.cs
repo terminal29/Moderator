@@ -18,8 +18,8 @@ public class SelectionScreen : MonoBehaviour
 
     public PopularityBar roddentPopularityBar;
     public PopularityBar roddentSuspicionBar;
-    private float roddentPopularity = 10f;
-    private float roddentSuspicion = 10f;
+    private float roddentPopularity = 5f;
+    private float roddentSuspicion = 40f;
 
     public PopularityBar fancybookPopularityBar;
     public PopularityBar fancybookSuspicionBar;

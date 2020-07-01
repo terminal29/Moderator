@@ -67,6 +67,13 @@ public class VisibleTitle : MonoBehaviour
 
             // Make first row
             GameObject currentRow = MakeRow();
+            // Show 
+            GameObject boardName = Instantiate(fixedTitlePrefab, currentRow.GetComponent<RectTransform>()).gameObject;
+            // Set fixed text
+            boardName.GetComponent<FixedTitleComponentObject>().SetText("> " + title.GetBoard());
+
+            // Make next row
+            currentRow = MakeRow();
 
             Func<ITitleComponent, GameObject> MakeObjectFromTitleComponent = (ITitleComponent component) =>
             {

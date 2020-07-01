@@ -56,6 +56,7 @@ public class AllTitles
         )
         ),
     new IncomingTitle(
+        "b/cooking",
         "Here's my triple layer",
         new EditableTitleComponent(
                 new EditableComponentChoice("toastie", 2, -1, 0, 0),

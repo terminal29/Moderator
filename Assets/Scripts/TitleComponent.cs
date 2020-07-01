@@ -121,4 +121,9 @@ public class IncomingTitle
     {
         return titleComponents;
     }
+
+    public string GetBoard()
+    {
+        return subBoard;
+    }
 }
