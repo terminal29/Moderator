@@ -19,13 +19,13 @@ public class SelectionScreen : MonoBehaviour
 
     public PopularityBar roddentPopularityBar;
     public PopularityBar roddentTrustBar;
-    private float roddentPopularity = 5f;
-    private float roddentTrust = 5f;
+    private float roddentPopularity = 12f;
+    private float roddentTrust = 12f;
 
     public PopularityBar fancybookPopularityBar;
     public PopularityBar fancybookTrustBar;
-    private float fancybookPopularity = 20f;
-    private float fancybookTrust = 30f;
+    private float fancybookPopularity = 15f;
+    private float fancybookTrust = 25f;
 
     public Text infoPanel;
 
