@@ -19,12 +19,12 @@ public class SelectionScreen : MonoBehaviour
     public PopularityBar roddentPopularityBar;
     public PopularityBar roddentSuspicionBar;
     private float roddentPopularity = 5f;
-    private float roddentSuspicion = 40f;
+    private float roddentSuspicion = 5f;
 
     public PopularityBar fancybookPopularityBar;
     public PopularityBar fancybookSuspicionBar;
     private float fancybookPopularity = 20f;
-    private float fancybookSuspicion = 5f;
+    private float fancybookSuspicion = 30f;
 
     List<IncomingTitle> incomingTitles = new List<IncomingTitle>();
     int currentTitleIndex = 0;
@@ -99,9 +99,9 @@ public class SelectionScreen : MonoBehaviour
 
             // Update sliders
             roddentPopularityBar.SetValue(roddentPopularity / maxPopularity, false);
-            roddentSuspicionBar.SetValue(roddentSuspicion / maxPopularity, false);
+            roddentSuspicionBar.SetValue(1 - roddentSuspicion / maxPopularity, false);
             fancybookPopularityBar.SetValue(fancybookPopularity / maxPopularity, false);
-            fancybookSuspicionBar.SetValue(fancybookSuspicion / maxPopularity, false);
+            fancybookSuspicionBar.SetValue(1 - fancybookSuspicion / maxPopularity, false);
 
             // Get new title
             currentTitleIndex++;
