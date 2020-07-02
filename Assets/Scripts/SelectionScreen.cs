@@ -6,6 +6,7 @@ using System.Text;
 using Unity.Mathematics;
 using UnityEditor.Build.Content;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Canvas))]
@@ -17,25 +18,40 @@ public class SelectionScreen : MonoBehaviour
     private float maxPopularity = 50f;
 
     public PopularityBar roddentPopularityBar;
-    public PopularityBar roddentSuspicionBar;
+    public PopularityBar roddentTrustBar;
     private float roddentPopularity = 5f;
-    private float roddentSuspicion = 5f;
+    private float roddentTrust = 5f;
 
     public PopularityBar fancybookPopularityBar;
-    public PopularityBar fancybookSuspicionBar;
+    public PopularityBar fancybookTrustBar;
     private float fancybookPopularity = 20f;
-    private float fancybookSuspicion = 30f;
+    private float fancybookTrust = 30f;
+
+    public Text infoPanel;
+
+    public Image winOverlay;
+    public Text winOverlayText;
+
+    public CameraEffects cameraEffects;
 
     List<IncomingTitle> incomingTitles = new List<IncomingTitle>();
     int currentTitleIndex = 0;
+
+    enum EndingType
+    {
+        FancybookLowPopularity,
+        RoddentLowPopularity,
+        FancybookHighPopularity,
+        RoddentHighPopularity
+    }
 
     // Start is called before the first frame update
     void Start()
     {
         roddentPopularityBar.SetValue(roddentPopularity / maxPopularity, false);
-        roddentSuspicionBar.SetValue(roddentSuspicion / maxPopularity, false);
+        roddentTrustBar.SetValue(roddentTrust / maxPopularity, false);
         fancybookPopularityBar.SetValue(fancybookPopularity / maxPopularity, false);
-        fancybookSuspicionBar.SetValue(fancybookSuspicion / maxPopularity, false);
+        fancybookTrustBar.SetValue(fancybookTrust / maxPopularity, false);
 
         // randomise incoming articles
         incomingTitles = AllTitles.Titles.ToList().OrderBy(x => UnityEngine.Random.value).ToList();
@@ -46,62 +62,71 @@ public class SelectionScreen : MonoBehaviour
         {
             // Confirm new values
             var (rpop, rsus, fpop, fsus) = confirmModifiers();
+            infoPanel.text = "";
+
+            cameraEffects.Shake(0.1f, 0.1f);
 
             // If the edited article doesnt affect fancybook, add some randomness to it anyway
             fpop = fpop == 0.0f ? UnityEngine.Random.Range(-1.0f, 1.0f) : fpop;
             fsus = fsus == 0.0f ? UnityEngine.Random.Range(-1.0f, 1.0f) : fsus;
 
 
-            Debug.Log(string.Format("Modifiers are {0} {1} {2} {3}", rpop, rsus, fpop, fsus));
             roddentPopularity = Math.Min(maxPopularity, Math.Max(0, roddentPopularity + rpop));
-            roddentSuspicion = Math.Min(maxPopularity, Math.Max(0, roddentSuspicion + rsus));
+            roddentTrust = Math.Min(maxPopularity, Math.Max(0, roddentTrust - rsus));
             fancybookPopularity = Math.Min(maxPopularity, Math.Max(0, fancybookPopularity + fpop));
-            fancybookSuspicion = Math.Min(maxPopularity, Math.Max(0, fancybookSuspicion + fsus));
+            fancybookTrust = Math.Min(maxPopularity, Math.Max(0, fancybookTrust - fsus));
 
-            if (roddentSuspicion >= maxPopularity * 0.8f)
+            Debug.Log(String.Format("RP {0} RT {1} FP {2} FT {3}", roddentPopularity, roddentTrust, fancybookPopularity, fancybookTrust));
+
+
+            if (roddentPopularity <= 1)
             {
-                Debug.Log("People are too suspicious of Roddent! Many leave your platform!");
+                TriggerEnding(EndingType.RoddentLowPopularity);
+            }
+
+            else if (fancybookPopularity <= 1)
+            {
+                TriggerEnding(EndingType.FancybookLowPopularity);
+            }
+            else if (fancybookPopularity >= 0.9 * maxPopularity)
+            {
+                TriggerEnding(EndingType.FancybookHighPopularity);
+            }
+            else if (roddentPopularity >= 0.9 * maxPopularity)
+            {
+                TriggerEnding(EndingType.RoddentHighPopularity);
+            }
+
+
+
+            if (roddentTrust <= 0.1 * maxPopularity)
+            {
+                infoPanel.text = "Roddent's trust is too low, many people are leaving the platform.";
                 roddentPopularity /= 1.5f;
             }
-
-            if (roddentPopularity >= maxPopularity * 0.8f)
+            else if (fancybookPopularity >= maxPopularity * 0.8f)
             {
-                Debug.Log("People love your platform! Many people are leaving Fancybook!");
-                fancybookPopularity /= 1.5f;
-            }
-
-            if (fancybookSuspicion >= maxPopularity * 0.8f)
-            {
-                Debug.Log("People are too suspicious of Fancybook! Many leave Fancybook!");
-                fancybookPopularity /= 1.5f;
-            }
-
-            if (fancybookPopularity >= maxPopularity * 0.8f)
-            {
-                Debug.Log("People love Fancybook! Many people are leaving to go to Fancybook!");
+                infoPanel.text = "People love Fancybook! Many people are leaving Roddent to go to Fancybook!";
                 roddentPopularity /= 1.5f;
             }
-
-            if (roddentPopularity <= 0.1)
+            else if (roddentPopularity >= maxPopularity * 0.8f)
             {
-                Debug.Log("Nobody is using Roddent anymore. You Lose!");
-                Application.Quit();
+                infoPanel.text = "People love your platform, many are leaving Fancybook!";
+                fancybookPopularity /= 1.5f;
             }
-
-            if (fancybookPopularity <= 0.1)
+            else if (fancybookTrust <= maxPopularity * 0.1f)
             {
-                Debug.Log("Nobody is using Fancybook anymore. You Win!");
-                Application.Quit();
+                infoPanel.text = "People don't trust Fancybook, many are leaving.";
+                fancybookPopularity /= 1.5f;
             }
-
 
 
 
             // Update sliders
             roddentPopularityBar.SetValue(roddentPopularity / maxPopularity, false);
-            roddentSuspicionBar.SetValue(1 - roddentSuspicion / maxPopularity, false);
+            roddentTrustBar.SetValue(roddentTrust / maxPopularity, false);
             fancybookPopularityBar.SetValue(fancybookPopularity / maxPopularity, false);
-            fancybookSuspicionBar.SetValue(1 - fancybookSuspicion / maxPopularity, false);
+            fancybookTrustBar.SetValue(fancybookTrust / maxPopularity, false);
 
             // Get new title
             currentTitleIndex++;
@@ -159,27 +184,73 @@ public class SelectionScreen : MonoBehaviour
         var (rpop, rsus, fpop, fsus) = calculateBaseModifiers();
 
         float possibleRPop = roddentPopularity + rpop;
-        float possibleRSus = roddentSuspicion + rsus;
+        float possibleRSus = roddentTrust - rsus;
         float possibleFPop = fancybookPopularity + fpop;
-        float possibleFSus = fancybookSuspicion + fsus;
+        float possibleFSus = fancybookTrust - fsus;
 
         roddentPopularityBar.SetValue(possibleRPop / maxPopularity, true);
-        roddentSuspicionBar.SetValue(possibleRSus / maxPopularity, true);
+        roddentTrustBar.SetValue(possibleRSus / maxPopularity, true);
         fancybookPopularityBar.SetValue(possibleFPop / maxPopularity, true);
-        fancybookSuspicionBar.SetValue(possibleFSus / maxPopularity, true);
+        fancybookTrustBar.SetValue(possibleFSus / maxPopularity, true);
     }
 
     public void ButtonHoverOut()
     {
         roddentPopularityBar.SetValue(roddentPopularity / maxPopularity, false);
-        roddentSuspicionBar.SetValue(roddentSuspicion / maxPopularity, false);
+        roddentTrustBar.SetValue(roddentTrust / maxPopularity, false);
         fancybookPopularityBar.SetValue(fancybookPopularity / maxPopularity, false);
-        fancybookSuspicionBar.SetValue(fancybookSuspicion / maxPopularity, false);
+        fancybookTrustBar.SetValue(fancybookTrust / maxPopularity, false);
     }
 
     // Update is called once per frame
     void Update()
     {
 
+    }
+
+    private void TriggerEnding(EndingType ending)
+    {
+        switch (ending)
+        {
+            case EndingType.FancybookLowPopularity:
+                {
+                    ShowOverlayWithMessage("Fancybooks popularity is so low that nobody uses their platform anymore. They have closed up shop and 10,000 employees are out of work. Congrats, You win!");
+                }
+                break;
+            case EndingType.RoddentLowPopularity:
+                {
+                    ShowOverlayWithMessage("Roddents popularity is so low that nobody uses your platform anymore. They have closed up shop and you are out of a job. You lose.");
+                }
+                break;
+            case EndingType.RoddentHighPopularity:
+                {
+                    ShowOverlayWithMessage("Roddent is so popular, everyone is using them. Fancybook can't compete and have closed up shop, 10,000 employees are out of work. Congrats, You win!");
+                }
+                break;
+            case EndingType.FancybookHighPopularity:
+                {
+                    ShowOverlayWithMessage("Fancybook is so popular that nobody uses your platform anymore. Roddent have closed up shop and you are out of a job. You lose.");
+                }
+                break;
+        }
+    }
+
+    private void ShowOverlayWithMessage(string message)
+    {
+        winOverlayText.text = message;
+        winOverlay.gameObject.SetActive(true);
+    }
+
+    public void OnRestartPressed()
+    {
+        // Reload opening scene
+        cameraEffects.Shake(0.1f, 0.1f);
+        SceneManager.LoadScene(0);
+    }
+
+    public void OnQuitPressed()
+    {
+        cameraEffects.Shake(0.1f, 0.1f);
+        Application.Quit();
     }
 }
