@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
-
+[RequireComponent(typeof(AudioSource))]
 public class MenuController : MonoBehaviour
 {
     public CameraEffects cameraEffects;
@@ -13,10 +13,17 @@ public class MenuController : MonoBehaviour
     public GameObject guide2;
     public GameObject guide3;
 
+    private AudioSource source;
+    public AudioClip buttonPress;
+    public AudioClip startupWhine;
+    public AudioClip menuButtonPress;
+    public AudioSource whinePlayer;
+
     private List<GameObject> screens;
 
     public enum MenuScreen
     {
+        None,
         Intro1,
         Intro2,
         MainMenu,
@@ -61,13 +68,23 @@ public class MenuController : MonoBehaviour
     void Start()
     {
         screens = new List<GameObject> { intro1, intro2, mainMenu, guide1, guide2, guide3 };
+        source = GetComponent<AudioSource>();
         StartCoroutine(RunIntroAnimation());
     }
 
     private IEnumerator RunIntroAnimation()
     {
+        EnableScreen(MenuScreen.None);
+        source.PlayOneShot(buttonPress);
+        yield return new WaitForSeconds(0.5f);
+        source.PlayOneShot(startupWhine, 0.2f);
+        yield return new WaitForSeconds(0.5f);
         EnableScreen(MenuScreen.Intro1);
-        yield return new WaitForSeconds(3);
+        for (int i = 0; i < 30; i++)
+        {
+            whinePlayer.volume = (i / 30f) * 0.07f;
+            yield return new WaitForSeconds(0.1f);
+        }
         EnableScreen(MenuScreen.Intro2);
         yield return new WaitForSeconds(3);
         EnableScreen(MenuScreen.MainMenu);
@@ -75,35 +92,38 @@ public class MenuController : MonoBehaviour
 
     public void OnPlayPressed()
     {
+        source.PlayOneShot(menuButtonPress);
         EnableScreen(MenuScreen.Guide1);
     }
 
     public void OnQuitPressed()
     {
+        source.PlayOneShot(menuButtonPress);
         Application.Quit();
     }
 
     public void OnNextPressed()
     {
+        cameraEffects.Shake(0.1f, 0.1f);
+        source.PlayOneShot(menuButtonPress);
         if (currentScreen == MenuScreen.Guide1)
         {
-            cameraEffects.Shake(0.1f, 0.1f);
             EnableScreen(MenuScreen.Guide2);
         }
         else if (currentScreen == MenuScreen.Guide2)
         {
-            cameraEffects.Shake(0.1f, 0.1f);
             EnableScreen(MenuScreen.Guide3);
         }
         else if (currentScreen == MenuScreen.Guide3)
         {
-            OnSkipPressed();
+            gameObject.SetActive(false);
         }
     }
 
     public void OnSkipPressed()
     {
         cameraEffects.Shake(0.1f, 0.1f);
+        source.PlayOneShot(menuButtonPress);
         gameObject.SetActive(false);
     }
 

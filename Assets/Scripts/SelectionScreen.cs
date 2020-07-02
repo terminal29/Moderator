@@ -14,6 +14,8 @@ public class SelectionScreen : MonoBehaviour
 {
     public VisibleTitle shownTitle;
     public Button postButton;
+    public AudioSource sendSource;
+    public AudioClip sendClip;
 
     private float maxPopularity = 50f;
 
@@ -65,6 +67,7 @@ public class SelectionScreen : MonoBehaviour
             infoPanel.text = "";
 
             cameraEffects.Shake(0.1f, 0.1f);
+            sendSource.PlayOneShot(sendClip);
 
             // If the edited article doesnt affect fancybook, add some randomness to it anyway
             fpop = fpop == 0.0f ? UnityEngine.Random.Range(-1.0f, 1.0f) : fpop;
